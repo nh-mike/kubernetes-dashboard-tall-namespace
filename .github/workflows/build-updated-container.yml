@@ -1,0 +1,102 @@
+name: Build and Release Multi-Arch Image
+on:
+  push:
+  schedule:
+    - cron: '0 0 */7 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: nhmike94
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Pull the current upstream image digest
+        id: upstream_digest
+        run: |
+          UPSTREAM_IMAGE="kubernetesui/dashboard-web:latest"
+          docker pull $UPSTREAM_IMAGE
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $UPSTREAM_IMAGE | cut -d'@' -f2)
+          echo "digest=$DIGEST" >> $GITHUB_ENV
+
+      - name: Compare digests
+        id: compare_digest
+        run: |
+          echo "Current digest: ${{ secrets.CURRENT_DIGEST }}"
+          echo "Upstream digest: $DIGEST"
+          if [ "$DIGEST" == "${{ secrets.CURRENT_DIGEST }}" ]; then
+            echo "No updates found."
+            echo "update_found=false" >> $GITHUB_ENV
+          else
+            echo "Update found."
+            echo "update_found=true" >> $GITHUB_ENV
+          fi
+
+      - name: Update stored digest
+        if: env.update_found == 'true'
+        run: echo "::set-secret name=CURRENT_DIGEST::$DIGEST"
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: check-upstream
+    if: needs.check-upstream.outputs.update_found == 'true'
+
+    steps:
+      - name: Start Ubuntu container and install Docker
+        run: |
+          apt-get update
+          apt-get install -y docker.io
+
+      - name: Log in to Docker Hub
+        if: env.DRY_RUN != 'true'
+        uses: docker/login-action@v2
+        with:
+          username: nhmike94
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Log in to GitHub Container Registry
+        if: env.DRY_RUN != 'true'
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Set up QEMU for multi-arch builds
+        run: |
+          docker buildx prune -a --force
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+          docker buildx create --name kubernetes-dashboard-builder --use
+
+      - name: Build and push multi-arch image
+        env:
+          OUTPUTTYPE: "registry"
+          WEB_VERSION: "latest"
+        run: |
+          docker buildx build . \
+            --file Dockerfile \
+            --platform linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
+            -t "test-image:dry-run" \
+            --load # Only load the image locally without pushing
+
+      - name: Push Docker Hub image
+        if: env.DRY_RUN != 'true'
+        run: |
+          docker buildx build . \
+            --file Dockerfile \
+            --platform linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
+            -t "nkmike94/x:${WEB_VERSION}" \
+            --push
+
+      - name: Push GitHub Container Registry image
+        if: env.DRY_RUN != 'true'
+        run: |
+          docker buildx build . \
+            --file Dockerfile \
+            --platform linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
+            -t "ghcr.io/nh-mike/kubernetes-dashboard-tall-namespace:${WEB_VERSION}" \
+            --push
