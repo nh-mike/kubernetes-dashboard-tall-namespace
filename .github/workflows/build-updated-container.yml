@@ -77,15 +77,13 @@ jobs:
           sudo docker buildx create --name kubernetes-dashboard-builder --use
 
       - name: Build and push multi-arch image
-        env:
-          OUTPUTTYPE: "registry"
-          WEB_VERSION: "latest"
+        if: env.DRY_RUN == 'true'
         run: |
           sudo docker buildx build . \
             --file Dockerfile \
             --platform linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
             -t "test-image:dry-run" \
-            --load # Only load the image locally without pushing
+            --output=type=="local,dest=images"
 
       - name: Push Docker Hub image
         if: env.DRY_RUN != 'true'
