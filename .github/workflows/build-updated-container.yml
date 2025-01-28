@@ -9,6 +9,9 @@ jobs:
   check-upstream:
     runs-on: ubuntu-latest
 
+    outputs:
+      update_found: ${{ steps.compare_digest.outputs.update_found }}
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3
@@ -34,10 +37,10 @@ jobs:
           echo "Upstream digest: $DIGEST"
           if [ "$DIGEST" == "${{ secrets.CURRENT_DIGEST }}" ]; then
             echo "No updates found."
-            echo "update_found=false" >> $GITHUB_ENV
+            echo "update_found=false" >> $GITHUB_OUTPUT
           else
             echo "Update found."
-            echo "update_found=true" >> $GITHUB_ENV
+            echo "update_found=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Update stored digest
