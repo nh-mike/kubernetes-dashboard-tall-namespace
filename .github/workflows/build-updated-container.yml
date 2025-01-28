@@ -83,7 +83,7 @@ jobs:
             --file Dockerfile \
             --platform linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
             -t "test-image:dry-run" \
-            --output=type=="local,dest=images"
+            --output_type=="local,dest=images"
 
       - name: Push Docker Hub image
         if: env.DRY_RUN != 'true'
@@ -91,7 +91,7 @@ jobs:
           sudo docker buildx build . \
             --file Dockerfile \
             --platform linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
-            -t "nkmike94/x:${WEB_VERSION}" \
+            -t "nkmike94/kubernetes-dashboard-tall-namespace:latest" \
             --push
 
       - name: Push GitHub Container Registry image
@@ -100,5 +100,5 @@ jobs:
           sudo docker buildx build . \
             --file Dockerfile \
             --platform linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
-            -t "ghcr.io/nh-mike/kubernetes-dashboard-tall-namespace:${WEB_VERSION}" \
+            -t "ghcr.io/nh-mike/kubernetes-dashboard-tall-namespace:latest" \
             --push
