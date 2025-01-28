@@ -68,6 +68,6 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
+          platforms: linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x
           push: true
           tags: nkmike94/kubernetes-dashboard-tall-namespace:latest
