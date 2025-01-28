@@ -25,7 +25,7 @@ jobs:
           UPSTREAM_IMAGE="kubernetesui/dashboard-web:latest"
           docker pull $UPSTREAM_IMAGE
           DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $UPSTREAM_IMAGE | cut -d'@' -f2)
-          echo "digest=$DIGEST" >> $GITHUB_ENV
+          echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
       - name: Compare digests
         id: compare_digest
