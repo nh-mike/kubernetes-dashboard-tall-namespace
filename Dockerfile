@@ -1,4 +1,4 @@
-FROM docker.io/kubernetesui/dashboard-web:1.6.1 AS baseimage
+FROM docker.io/kubernetesui/dashboard-web:1.7.0 AS baseimage
 
 FROM ubuntu:20.04 AS builder
 
@@ -8,7 +8,7 @@ RUN /usr/bin/find /public -type f -name "*.css" -exec /usr/bin/sed -i 's/.mat-se
 
 # Scratch can be used as the base image because the backend is compiled to include all
 # its dependencies.
-FROM docker.io/kubernetesui/dashboard-web:1.6.1 AS final
+FROM docker.io/kubernetesui/dashboard-web:1.7.0 AS final
 
 COPY --from=builder /public /public
 
