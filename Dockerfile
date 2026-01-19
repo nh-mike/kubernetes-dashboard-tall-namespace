@@ -4,7 +4,7 @@ FROM ubuntu:20.04 AS builder
 
 COPY --from=baseimage /public /public
 
-RUN /usr/bin/find /public -type f -name "*.css" -exec /usr/bin/sed -i 's/.mat-select-panel{/.mat-select-panel{max-height: 700px !important;/' {} +;
+RUN /usr/bin/find /public -type f -name "*.css" -exec /usr/bin/sed -i 's/.mat-select-panel{/.mat-select-panel{max-height: calc(100% - 40px) !important;/' {} +;
 
 # Scratch can be used as the base image because the backend is compiled to include all
 # its dependencies.
