@@ -1,3 +1,7 @@
+## Archive Notice
+As the Kubernetes Dashboard project is archived, so too is this repository.
+Thanks for using my little project!
+
 # kubernetes-dashboard-tall-namespace
 I got sick and tired of a namespace dropdown that maxes out at 256px tall.<br />
 So I made it calc(100% - 40px) tall.<br />
